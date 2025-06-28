@@ -1,0 +1,4 @@
+﻿  Main.cpp
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(78,17): warning C4804: '<': unsafe use of type 'bool' in operation
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(141,28): warning C4804: '<': unsafe use of type 'bool' in operation
+  OpenRT.vcxproj -> C:\Users\Milan\Desktop\OpenRT\OpenRT\x64\Debug\OpenRT.exe
