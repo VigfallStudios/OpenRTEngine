@@ -8,4 +8,7 @@ fun Start()
 fun Update()
 {
 	Debug.Log("Tick");
+
+	// This should move the camera 0.01 closer every frame
+	Camera.position.z += 0.01;
 }

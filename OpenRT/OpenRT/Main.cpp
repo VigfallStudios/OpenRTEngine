@@ -3,16 +3,28 @@
 #include <SDL3/SDL.h>
 #include <cmath>
 #include <string>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <queue>
+#include <algorithm>
+#ifdef max
+#undef max
+#endif
+#include <Windows.h>
 
 #include "Debug.h"
 #include "Scripting.h"
+#include "Vector.h"
+#include "Commands.h"
+#include "Editor.h"
 
 // Viewport
 int SCR_WIDTH = 800;
 int SCR_HEIGHT = 600;
 
-int wWidth = 800;
-int wHeight = 600;
+int wWidth = 1600;
+int wHeight = 900;
 
 float Q_rsqrt(float number) {
     long i;
@@ -31,23 +43,6 @@ float Q_rsqrt(float number) {
 }
 
 // Data structures
-struct Vec3 {
-    float x, y, z;
-    Vec3() : x(0), y(0), z(0) {}
-    Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-
-    Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
-    Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
-    Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
-
-    float dot(const Vec3& v) const { return x * v.x + y * v.y + z * v.z; }
-
-    Vec3 normalize() const {
-        float len = std::sqrt(x * x + y * y + z * z);
-        return Vec3(x / len, y / len, z / len);
-    }
-};
-
 struct Ray {
     Vec3 origin;
     Vec3 dir;
@@ -63,12 +58,46 @@ float HitSphere(const Vec3& center, float radius, const Ray& ray) {
     return (-b - std::sqrt(discriminant)) / (2.0f * a);
 }
 
+template <typename T>
+T clamp(T value, T minVal, T maxVal) {
+    if (value < minVal) return minVal;
+    if (value > maxVal) return maxVal;
+    return value;
+}
+
 inline Uint32 SkyColor(const Vec3& dir) {
-    float t = 0.5f * (dir.y + 1.0f);
-    Uint8 r = (Uint8)((1 - t) * 40 + t * 120);
-    Uint8 g = (Uint8)((1 - t) * 60 + t * 180);
-    Uint8 b = (Uint8)((1 - t) * 90 + t * 255);
+    // `t` goes from 0 (bottom) to 1 (top)
+    float t = clamp(dir.y * 0.5f + 0.5f, 0.0f, 1.0f);
+
+    // UE4-like gradient: interpolate between bottom and top colors
+    Uint8 r = (Uint8)((1.0f - t) * 200 + t * 0);     // 200 -> 0
+    Uint8 g = (Uint8)((1.0f - t) * 220 + t * 38);    // 220 -> 38
+    Uint8 b = (Uint8)((1.0f - t) * 255 + t * 84);    // 255 -> 84
+
     return (255u << 24) | (r << 16) | (g << 8) | b;
+}
+
+std::queue<std::string> commandQueue;
+std::mutex commandMutex;
+std::atomic<bool> consoleRunning(true);
+
+void ConsoleThread() {
+    std::string input;
+    while (consoleRunning) {
+        std::getline(std::cin, input);
+        if (!input.empty()) {
+            std::lock_guard<std::mutex> lock(commandMutex);
+            commandQueue.push(input);
+        }
+    }
+}
+
+#define BO_DOCK_WIDTH 50
+#define BROWSER_HEIGHT 150
+
+template<typename T>
+T Max(T a, T b) {
+    return (a > b) ? a : b;
 }
 
 // === MAIN ===
@@ -91,7 +120,8 @@ int main(int argc, char* argv[]) {
     }
 
     ScriptCompiler sCompiler;
-    sCompiler.AddScript("test.ors");
+    CommandManager cmdManager(sCompiler);
+    std::thread console(ConsoleThread);
 
     bool running = true;
     SDL_Event event;
@@ -125,59 +155,168 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    UIButton myButton = { {400, 50, 100, 100}, "Play" };
+    UIButton objectSphere = { {5, MENU_BAR_HEIGHT + 40, 390, 80}, "Sphere" };
+
+    bool playMode = false;
+
     while (running) {
         // === Handle input ===
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) running = false;
+            HandleUIEvents(&event);
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(commandMutex);
+            while (!commandQueue.empty()) {
+                std::string cmd = commandQueue.front();
+                commandQueue.pop();
+                cmdManager.RunString(cmd);
+            }
         }
 
         const bool* keys = SDL_GetKeyboardState(NULL);
 
         SDL_RenderClear(renderer);
 
-        // === Lock framebuffer ===
-        void* pixels;
-        int pitchBytes;
-        if (SDL_LockTexture(framebuffer, nullptr, &pixels, &pitchBytes) < 0) continue;
+        if (playMode)
+        {
+            // === Lock framebuffer ===
+            void* pixels;
+            int pitchBytes;
+            if (SDL_LockTexture(framebuffer, nullptr, &pixels, &pitchBytes) < 0) continue;
 
-        Uint32* buffer = (Uint32*)pixels;
-        int pitch = pitchBytes / sizeof(Uint32);
+            Uint32* buffer = (Uint32*)pixels;
+            int pitch = pitchBytes / sizeof(Uint32);
 
-        for (int y = 0; y < SCR_HEIGHT; y += step) {
-            for (int x = 0; x < SCR_WIDTH; x += step) {
-                Vec3 dir = rayDirs[y * SCR_WIDTH + x];
-                Ray ray{ cam, dir };
+            for (int y = 0; y < SCR_HEIGHT; y += step) {
+                for (int x = 0; x < SCR_WIDTH; x += step) {
+                    Vec3 dir = rayDirs[y * SCR_WIDTH + x];
+                    Ray ray{ cam, dir };
 
-                float t = HitSphere(sphereCenter, sphereRadius, ray);
-                Uint32 color;
+                    float t = HitSphere(sphereCenter, sphereRadius, ray);
+                    Uint32 color;
 
-                if (t > 0.0f) {
-                    Vec3 hit = ray.origin + ray.dir * t;
-                    Vec3 normal = (hit - sphereCenter).normalize();
-                    float brightness = std::max(0.0f, normal.dot(lightDir));
+                    if (t > 0.0f) {
+                        Vec3 hit = ray.origin + ray.dir * t;
+                        Vec3 normal = (hit - sphereCenter).normalize();
+                        float brightness = Max(0.0f, normal.dot(lightDir));
 
-                    Uint8 r = (Uint8)(255 * brightness);
-                    Uint8 g = (Uint8)(50 * brightness);
-                    Uint8 b = (Uint8)(50 * brightness);
-                    color = (255u << 24) | (r << 16) | (g << 8) | b;
+                        Uint8 r = (Uint8)(255 * brightness);
+                        Uint8 g = (Uint8)(50 * brightness);
+                        Uint8 b = (Uint8)(50 * brightness);
+                        color = (255u << 24) | (r << 16) | (g << 8) | b;
+                    }
+                    else {
+                        color = SkyColor(ray.dir);
+                    }
+
+                    for (int dy = 0; dy < step; ++dy) {
+                        for (int dx = 0; dx < step; ++dx) {
+                            int px = x + dx;
+                            int py = y + dy;
+                            if (px < SCR_WIDTH && py < SCR_HEIGHT)
+                                buffer[py * pitch + px] = color;
+                        }
+                    }
                 }
-                else {
-                    color = SkyColor(ray.dir);
-                }
+            }
+        }
+        else
+        {
+            void* pixels;
+            int pitchBytes;
+            if (SDL_LockTexture(framebuffer, nullptr, &pixels, &pitchBytes) < 0) continue;
 
-                for (int dy = 0; dy < step; ++dy) {
-                    for (int dx = 0; dx < step; ++dx) {
-                        int px = x + dx;
-                        int py = y + dy;
-                        if (px < SCR_WIDTH && py < SCR_HEIGHT)
-                            buffer[py * pitch + px] = color;
+            Uint32* buffer = (Uint32*)pixels;
+            int pitch = pitchBytes / sizeof(Uint32);
+
+            for (int y = 0; y < SCR_HEIGHT; y += step) {
+                for (int x = 0; x < SCR_WIDTH; x += step) {
+                    for (int dy = 0; dy < step; ++dy) {
+                        for (int dx = 0; dx < step; ++dx) {
+                            int px = x + dx;
+                            int py = y + dy;
+                            if (px < SCR_WIDTH && py < SCR_HEIGHT)
+                                buffer[py * pitch + px] = SkyColor(Vec3(0, 0, 1));
+                        }
                     }
                 }
             }
         }
 
+        SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255); // R, G, B, A
+        SDL_RenderClear(renderer);
+
         SDL_UnlockTexture(framebuffer);
-        SDL_RenderTexture(renderer, framebuffer, nullptr, nullptr);
+        // Calculate center position to render framebuffer
+        float offsetX = (wWidth - SCR_WIDTH) * 0.5f;
+        float offsetY = (wHeight - SCR_HEIGHT) * 0.5f;
+
+        SDL_FRect dstRect = { offsetX, offsetY, (float)SCR_WIDTH, (float)SCR_HEIGHT };
+        SDL_RenderTexture(renderer, framebuffer, nullptr, &dstRect);
+
+        if (UpdateUIButton(myButton, uiInput)) {
+            Debug.Log("Play Mode Toggled");
+            playMode = !playMode;
+        }
+
+        if (UpdateUIButton(objectSphere, uiInput))
+        {
+            Debug.Log("Creating sphere");
+            MessageBox(NULL, L"Object not created due to ORT_NOT_IMPLEMENTED", L"Could not create GameObject", MB_OK | MB_ICONERROR);
+        }
+
+        // Menu bar background
+        SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255);
+
+        SDL_FRect bar = { 0, 0, wWidth, MENU_BAR_HEIGHT };
+        SDL_RenderFillRect(renderer, &bar);
+
+        SDL_FRect playBar = { offsetX, MENU_BAR_HEIGHT + 2, SCR_WIDTH, offsetY - 10 };
+        SDL_RenderFillRect(renderer, &playBar);
+        DrawUIButton(renderer, myButton);
+
+        SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255);
+        SDL_FRect bo = { 0, MENU_BAR_HEIGHT, offsetX - 5, wHeight };
+        SDL_RenderFillRect(renderer, &bo);
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        DrawText(renderer, "Basic Objects", 5, MENU_BAR_HEIGHT + 10, 3);
+        DrawUIButton(renderer, objectSphere);
+
+        SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255);
+        SDL_FRect browser = { offsetX - 4, wHeight - BROWSER_HEIGHT, wWidth, BROWSER_HEIGHT };
+        SDL_RenderFillRect(renderer, &browser);
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        DrawText(renderer, "Browser", offsetX - 4, (wHeight - BROWSER_HEIGHT) + 10, 2);
+
+        SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255);
+        SDL_FRect bo1 = { wWidth - offsetX - 5, MENU_BAR_HEIGHT, offsetX - 5, wHeight };
+        SDL_RenderFillRect(renderer, &bo1);
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        DrawText(renderer, "Scene", wWidth - offsetX, MENU_BAR_HEIGHT + 10, 3);
+
+        // Create menu items
+        UIMenuItem fileItem = { {10, 0, 50, MENU_BAR_HEIGHT}, "File" };
+        UIMenuItem editItem = { {70, 0, 50, MENU_BAR_HEIGHT}, "Edit" };
+        UIMenuItem viewItem = { {130, 0, 50, MENU_BAR_HEIGHT}, "View" };
+
+        // Update and draw menu items
+        UpdateMenuItem(fileItem, uiInput);
+        UpdateMenuItem(editItem, uiInput);
+        UpdateMenuItem(viewItem, uiInput);
+
+        DrawMenuItem(renderer, fileItem);
+        DrawMenuItem(renderer, editItem);
+        DrawMenuItem(renderer, viewItem);
+
+        // Respond to clicks
+        if (fileItem.clicked) {
+            Debug.Log("File menu clicked!");
+        }
+
+        uiInput.mouseClicked = false;
 
         SDL_RenderPresent(renderer);
 
@@ -195,12 +334,17 @@ int main(int argc, char* argv[]) {
 
         deltaTime = (currentTime - lastTime) / 1000.0f;
 
-        sCompiler.Update(); // Script system tick
+        if (playMode)
+            sCompiler.Update(&cam, keys); // Script system tick
     }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    consoleRunning = false;
+    console.join(); // Wait for thread to finish
+
     Debug.Log("OpenRT closed.");
 
     return 0;

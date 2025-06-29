@@ -143,13 +143,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Scripting.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Commands.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="Editor.h" />
     <ClInclude Include="Scripting.h" />
+    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test.ors" />

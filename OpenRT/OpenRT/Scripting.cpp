@@ -41,7 +41,7 @@ void ScriptCompiler::RunStartFunction(const std::string& scriptContent)
     }
 }
 
-void ScriptCompiler::RunUpdateFunctions()
+void ScriptCompiler::RunUpdateFunctions(Vec3* cam, const bool* keys)
 {
     for (const auto& scriptName : scriptNames)
     {
@@ -74,10 +74,113 @@ void ScriptCompiler::RunUpdateFunctions()
                 Debug.Log("[Script-Update] " + msg);
             }
         }
+
+        // Naive parse for: Camera.position.x = <value>;
+        size_t camPos = body.find("Camera.position.x =");
+        if (camPos != std::string::npos) {
+            size_t eq = body.find("=", camPos);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->x = val;
+                    Debug.Log("[Script-Update] Camera X set to " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.x value");
+                }
+            }
+        }
+
+        size_t camPos1 = body.find("Camera.position.y =");
+        if (camPos1 != std::string::npos) {
+            size_t eq = body.find("=", camPos1);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->y = val;
+                    Debug.Log("[Script-Update] Camera Y set to " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.y value");
+                }
+            }
+        }
+
+        size_t camPos2 = body.find("Camera.position.z =");
+        if (camPos2 != std::string::npos) {
+            size_t eq = body.find("=", camPos2);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->z = val;
+                    Debug.Log("[Script-Update] Camera Z set to " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.z value");
+                }
+            }
+        }
+
+        size_t camPos3 = body.find("Camera.position.z +=");
+        if (camPos3 != std::string::npos) {
+            size_t eq = body.find("=", camPos3);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->z += val;
+                    Debug.Log("[Script-Update] Camera Z added by " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.z value");
+                }
+            }
+        }
+
+        size_t camPos4 = body.find("Camera.position.x +=");
+        if (camPos4 != std::string::npos) {
+            size_t eq = body.find("=", camPos4);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->x += val;
+                    Debug.Log("[Script-Update] Camera X added by " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.x value");
+                }
+            }
+        }
+
+        size_t camPos5 = body.find("Camera.position.y +=");
+        if (camPos5 != std::string::npos) {
+            size_t eq = body.find("=", camPos5);
+            size_t semicolon = body.find(";", eq);
+            if (eq != std::string::npos && semicolon != std::string::npos) {
+                std::string valueStr = body.substr(eq + 1, semicolon - eq - 1);
+                try {
+                    float val = std::stof(valueStr);
+                    cam->y += val;
+                    Debug.Log("[Script-Update] Camera Y added by " + std::to_string(val));
+                }
+                catch (...) {
+                    Debug.LogError("Script parse error: could not parse Camera.position.y value");
+                }
+            }
+        }
     }
 }
 
-void ScriptCompiler::Update()
+void ScriptCompiler::Update(Vec3* cam, const bool* keys)
 {
     if (!started) {
         started = true;
@@ -98,5 +201,5 @@ void ScriptCompiler::Update()
         }
     }
 
-    RunUpdateFunctions();
+    RunUpdateFunctions(cam, keys);
 }
