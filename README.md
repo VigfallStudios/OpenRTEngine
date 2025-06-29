@@ -2,16 +2,15 @@
 OpenRT Engine Official Github Repository
 
 # What is OpenRT?
-OpenRT is a game engine where rendering is completely based on techniques like Raytracing, Raymarching, etc. Currently, OpenRT is only developed by 2 people (kap, bacanashvili).
+OpenRT is a game engine where our aim is to make a **Lighter Unreal Engine 4**. Currently, OpenRT is only developed by 3 people (kap, bacanashvili, voltaged).
 
 # Features?
 As of now:
-- Raytracing
 - OpenRTScript
 - Editor UI
   
 Planned:
-- Raymarching
+- Improved lighting
 - Packages
 - .ortasset files
 
