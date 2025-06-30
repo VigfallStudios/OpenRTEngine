@@ -1,6 +1,13 @@
 # OpenRTEngine
 OpenRT Engine Official Github Repository
 
+# Quick note
+If you love OpenRT and what it's doing and would like to help, you can donate to my Ko-Fi:
+
+https://ko-fi.com/kappetrov
+
+Otherwise, just spread the word :D
+
 # What is OpenRT?
 OpenRT is a game engine where our aim is to make a **Lighter Unreal Engine 4**. Currently, OpenRT is only developed by 3 people (kap, bacanashvili, voltaged).
 
