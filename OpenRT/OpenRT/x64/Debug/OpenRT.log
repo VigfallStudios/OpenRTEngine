@@ -1,0 +1,33 @@
+﻿  Main.cpp
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Editor.h(200,62): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'Main.cpp')
+  
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Editor.h(200,46): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'Main.cpp')
+  
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Editor.h(224,65): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'Main.cpp')
+  
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Editor.h(224,48): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  (compiling source file 'Main.cpp')
+  
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(241,17): warning C4804: '<': unsafe use of type 'bool' in operation
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(322,32): warning C4804: '<': unsafe use of type 'bool' in operation
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(338,32): warning C4804: '<': unsafe use of type 'bool' in operation
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(385,33): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(385,33): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(388,61): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(388,61): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(393,59): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(393,59): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(396,64): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(401,52): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(401,52): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(401,70): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(401,70): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(404,47): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(407,79): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(407,79): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(410,71): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Milan\Desktop\OpenRT\OpenRT\Main.cpp(410,44): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  OpenRT.vcxproj -> C:\Users\Milan\Desktop\OpenRT\OpenRT\x64\Debug\OpenRT.exe
